@@ -3,14 +3,64 @@
 
 @theme {
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  
-  --color-primary: #f09942;
-  --color-background-light: #f8f7f6;
-  --color-background-dark: #221910;
+
+  --color-primary: var(--theme-primary);
+  --color-background-light: var(--theme-bg-light);
+  --color-background-dark: var(--theme-bg-dark);
+}
+
+@layer base {
+  :root {
+    /* Default fallback */
+    --theme-primary: #f09942;
+    --theme-bg-light: #f8f7f6;
+    --theme-bg-dark: #221910;
+  }
+
+  /* Winter Theme: Cool blues, whites */
+  .theme-winter {
+    --theme-primary: #3b82f6;
+    /* Blue 500 */
+    --theme-bg-light: #f0fdf4;
+    /* Winter White/Very light blue */
+    --theme-bg-dark: #1e293b;
+    /* Slate 800 */
+  }
+
+  /* Spring Theme: Pastels, greens */
+  .theme-spring {
+    --theme-primary: #10b981;
+    /* Emerald 500 */
+    --theme-bg-light: #f0fdf4;
+    /* Green 50 */
+    --theme-bg-dark: #064e3b;
+    /* Emerald 900 */
+  }
+
+  /* Summer Theme: Bright yellows, blues */
+  .theme-summer {
+    --theme-primary: #eab308;
+    /* Yellow 500 */
+    --theme-bg-light: #fffbeb;
+    /* Amber 50 */
+    --theme-bg-dark: #713f12;
+    /* Yellow 900 */
+  }
+
+  /* Autumn Theme: Warm oranges, browns */
+  .theme-autumn {
+    --theme-primary: #f97316;
+    /* Orange 500 */
+    --theme-bg-light: #fff7ed;
+    /* Orange 50 */
+    --theme-bg-dark: #431407;
+    /* Orange 900 */
+  }
 }
 
 @layer base {
   body {
     @apply bg-background-light text-slate-900 antialiased;
+    transition: background-color 0.8s ease-in-out, color 0.8s ease-in-out;
   }
 }

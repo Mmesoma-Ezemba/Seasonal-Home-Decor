@@ -3,11 +3,28 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    <title>Seasonal Home Decor</title>
+    <script>
+      (function() {
+        try {
+          var manual = localStorage.getItem('manualSeason');
+          var currentSeason;
+          if (manual) {
+            currentSeason = manual;
+          } else {
+            var month = new Date().getMonth() + 1;
+            if (month === 12 || month === 1 || month === 2) currentSeason = 'winter';
+            else if (month >= 3 && month <= 5) currentSeason = 'spring';
+            else if (month >= 6 && month <= 8) currentSeason = 'summer';
+            else currentSeason = 'autumn';
+          }
+          document.documentElement.classList.add('theme-' + currentSeason);
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

@@ -2,6 +2,7 @@ import { Home, Search, ShoppingBag, User, Mail, Share2, ChevronLeft, ChevronRigh
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useSearchParams } from 'react-router-dom';
+import { useTheme } from './ThemeContext';
 
 // --- Types ---
 type Season = 'All' | 'Spring' | 'Summer' | 'Autumn' | 'Winter';
@@ -94,21 +95,41 @@ const PRODUCTS: Product[] = [
 
 // --- Components ---
 
+const SeasonSwitcher = () => {
+  const { season, manualSeason, setManualSeason } = useTheme();
+
+  return (
+    <div className="relative group flex items-center">
+      <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/20 hover:bg-primary/10 transition-colors font-medium text-xs uppercase tracking-widest text-slate-600 bg-white">
+        <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+        {manualSeason ? `Override: ${manualSeason}` : `Season: ${season}`}
+      </button>
+      <div className="absolute top-full right-0 mt-2 w-36 bg-white rounded-xl shadow-xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all flex flex-col overflow-hidden z-50">
+        <button onClick={() => setManualSeason(null)} className={`text-left px-4 py-2 text-sm hover:bg-slate-50 ${!manualSeason ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Auto Detect</button>
+        <button onClick={() => setManualSeason('spring')} className={`text-left px-4 py-2 text-sm hover:bg-slate-50 ${manualSeason === 'spring' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Spring</button>
+        <button onClick={() => setManualSeason('summer')} className={`text-left px-4 py-2 text-sm hover:bg-slate-50 ${manualSeason === 'summer' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Summer</button>
+        <button onClick={() => setManualSeason('autumn')} className={`text-left px-4 py-2 text-sm hover:bg-slate-50 ${manualSeason === 'autumn' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Autumn</button>
+        <button onClick={() => setManualSeason('winter')} className={`text-left px-4 py-2 text-sm hover:bg-slate-50 ${manualSeason === 'winter' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Winter</button>
+      </div>
+    </div>
+  );
+};
+
 const Navbar = () => {
   const location = useLocation();
-  
+
   return (
-    <header className="sticky top-0 z-50 bg-background-light/80 backdrop-blur-md border-b border-primary/10">
+    <header className="sticky top-0 z-50 bg-background-light/80 backdrop-blur-md border-b border-primary/10 transition-colors duration-500">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center">
+          <div className="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center transition-colors duration-500">
             <Home size={20} />
           </div>
           <h1 className="text-xl font-extrabold tracking-tight uppercase">
-            Hearth <span className="text-primary">&amp;</span> Home
+            Hearth <span className="text-primary transition-colors duration-500">&amp;</span> Home
           </h1>
         </Link>
-        
+
         <nav className="hidden md:flex items-center gap-10">
           {[
             { name: 'Catalog', path: '/catalog' },
@@ -116,18 +137,17 @@ const Navbar = () => {
             { name: 'About', path: '/about' },
             { name: 'Journal', path: '/journal' }
           ].map((item) => (
-            <Link 
-              key={item.name} 
-              to={item.path} 
-              className={`text-sm font-semibold transition-all relative py-2 group ${
-                location.pathname === item.path ? 'text-primary' : 'text-slate-600 hover:text-primary'
-              }`}
+            <Link
+              key={item.name}
+              to={item.path}
+              className={`text-sm font-semibold transition-all relative py-2 group ${location.pathname === item.path ? 'text-primary' : 'text-slate-600 hover:text-primary'
+                }`}
             >
               {item.name}
               {location.pathname === item.path && (
-                <motion.div 
+                <motion.div
                   layoutId="nav-underline"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary transition-colors duration-500"
                 />
               )}
             </Link>
@@ -137,19 +157,20 @@ const Navbar = () => {
         <div className="flex items-center gap-6">
           <div className="hidden lg:flex items-center bg-slate-100 rounded-lg px-4 py-2 gap-3 w-64 group focus-within:ring-2 focus-within:ring-primary/20 transition-all">
             <Search size={18} className="text-slate-400 group-focus-within:text-primary transition-colors" />
-            <input 
-              type="text" 
-              placeholder="Search stories..." 
+            <input
+              type="text"
+              placeholder="Search stories..."
               className="bg-transparent text-sm w-full focus:outline-none"
             />
           </div>
           <div className="flex items-center gap-4">
+            <SeasonSwitcher />
             <button className="lg:hidden p-2 hover:bg-primary/10 rounded-full transition-colors">
               <Search size={20} />
             </button>
             <button className="p-2 hover:bg-primary/10 rounded-full transition-colors relative">
               <ShoppingBag size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
+              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full transition-colors duration-500"></span>
             </button>
             <button className="p-2 hover:bg-primary/10 rounded-full transition-colors">
               <Link to="/signin">
@@ -164,42 +185,42 @@ const Navbar = () => {
 };
 
 const QuickViewModal = ({ product, onClose }: { product: Product, onClose: () => void }) => (
-  <motion.div 
+  <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
     className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm"
     onClick={onClose}
   >
-    <motion.div 
+    <motion.div
       initial={{ scale: 0.9, opacity: 0, y: 20 }}
       animate={{ scale: 1, opacity: 1, y: 0 }}
       exit={{ scale: 0.9, opacity: 0, y: 20 }}
-      className="bg-white rounded-2xl overflow-hidden max-w-4xl w-full shadow-2xl flex flex-col md:flex-row"
+      className="bg-background-light rounded-2xl overflow-hidden max-w-4xl w-full shadow-2xl flex flex-col md:flex-row transition-colors duration-500"
       onClick={e => e.stopPropagation()}
     >
       <div className="md:w-1/2 aspect-square relative">
-        <img 
-          src={product.image} 
-          alt={product.name} 
+        <img
+          src={product.image}
+          alt={product.name}
           className="absolute inset-0 w-full h-full object-cover"
           referrerPolicy="no-referrer"
         />
       </div>
       <div className="md:w-1/2 p-10 flex flex-col justify-center relative">
-        <button 
+        <button
           onClick={onClose}
-          className="absolute top-6 right-6 p-2 hover:bg-slate-100 rounded-full transition-colors"
+          className="absolute top-6 right-6 p-2 hover:bg-slate-200/50 rounded-full transition-colors"
         >
           <X size={20} />
         </button>
         <div className="space-y-6">
           <div>
-            <p className="text-primary font-bold text-sm uppercase tracking-widest mb-2">{product.collection}</p>
+            <p className="text-primary font-bold text-sm uppercase tracking-widest mb-2 transition-colors duration-500">{product.collection}</p>
             <h2 className="text-3xl font-bold">{product.name}</h2>
-            <p className="text-2xl font-medium text-slate-900 mt-2">${product.price.toFixed(2)}</p>
+            <p className="text-2xl font-medium text-slate-800 mt-2">${product.price.toFixed(2)}</p>
           </div>
-          <p className="text-slate-500 leading-relaxed">
+          <p className="text-slate-600 leading-relaxed">
             {product.description || "Thoughtfully designed and ethically sourced home goods for every corner of your life."}
           </p>
           <div className="pt-4">
@@ -214,7 +235,7 @@ const QuickViewModal = ({ product, onClose }: { product: Product, onClose: () =>
 );
 
 const ProductCard = ({ product, onQuickView }: { product: Product, onQuickView: (p: Product) => void }) => (
-  <motion.div 
+  <motion.div
     whileHover={{ y: -8 }}
     className="group cursor-pointer transition-all duration-500"
   >
@@ -226,7 +247,7 @@ const ProductCard = ({ product, onQuickView }: { product: Product, onQuickView: 
         className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
       />
       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500"></div>
-      <button 
+      <button
         onClick={(e) => {
           e.stopPropagation();
           onQuickView(product);
@@ -241,7 +262,7 @@ const ProductCard = ({ product, onQuickView }: { product: Product, onQuickView: 
         <h3 className="font-semibold text-lg group-hover:text-primary transition-colors duration-300">{product.name}</h3>
         <p className="text-sm text-slate-500">{product.collection}</p>
       </div>
-      <span className="text-primary font-bold">${product.price.toFixed(2)}</span>
+      <span className="text-primary font-bold transition-colors duration-500">${product.price.toFixed(2)}</span>
     </div>
   </motion.div>
 );
@@ -271,8 +292,8 @@ const CatalogPage = () => {
     setSearchParams(searchParams);
   };
 
-  const filteredProducts = activeSeason === 'All' 
-    ? PRODUCTS 
+  const filteredProducts = activeSeason === 'All'
+    ? PRODUCTS
     : PRODUCTS.filter(p => p.season === activeSeason || p.season === 'All');
 
   const seasons: Season[] = ['All', 'Spring', 'Summer', 'Autumn', 'Winter'];
@@ -280,14 +301,14 @@ const CatalogPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       <section className="mb-16 text-center space-y-4">
-        <motion.h2 
+        <motion.h2
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl md:text-5xl font-bold tracking-tight"
         >
           Seasonal Home Decor
         </motion.h2>
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -298,23 +319,22 @@ const CatalogPage = () => {
       </section>
 
       <div className="flex flex-col items-center gap-8 mb-16">
-        <div className="flex flex-wrap items-center justify-center gap-2 p-1.5 bg-white rounded-xl shadow-sm border border-primary/10">
+        <div className="flex flex-wrap items-center justify-center gap-2 p-1.5 bg-background-light rounded-xl shadow-sm border border-primary/10 transition-colors duration-500">
           {seasons.map((season) => (
             <button
               key={season}
               onClick={() => handleSeasonChange(season)}
-              className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${
-                activeSeason === season 
-                  ? 'bg-primary text-white shadow-md' 
+              className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${activeSeason === season
+                  ? 'bg-primary text-white shadow-md'
                   : 'hover:bg-primary/10 text-slate-600'
-              }`}
+                }`}
             >
               {season}
             </button>
           ))}
         </div>
       </div>
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
         <AnimatePresence mode="popLayout">
           {filteredProducts.map((product) => (
@@ -340,9 +360,8 @@ const CatalogPage = () => {
           {[1, 2, 3].map((page) => (
             <button
               key={page}
-              className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors font-medium ${
-                page === 1 ? 'bg-primary text-white font-bold' : 'hover:bg-primary/10'
-              }`}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors font-medium ${page === 1 ? 'bg-primary text-white font-bold' : 'hover:bg-primary/10'
+                }`}
             >
               {page}
             </button>
@@ -355,9 +374,9 @@ const CatalogPage = () => {
 
       <AnimatePresence>
         {selectedProduct && (
-          <QuickViewModal 
-            product={selectedProduct} 
-            onClose={() => setSelectedProduct(null)} 
+          <QuickViewModal
+            product={selectedProduct}
+            onClose={() => setSelectedProduct(null)}
           />
         )}
       </AnimatePresence>
@@ -366,6 +385,18 @@ const CatalogPage = () => {
 };
 
 const HomePage = () => {
+  const { season } = useTheme();
+
+  // These use the AI generated hero banners located outside the src/ dir, handled by pulling them in via absolute URIs or moving them.
+  // We'll move them to public folder first in a subsequent tool call. 
+  // Let's use paths relative to /public which Vite will serve directly.
+  const heroImages = {
+    winter: "/winter_hero.png",
+    spring: "/spring_hero.png",
+    summer: "/summer_hero.png",
+    autumn: "/autumn_hero.png"
+  };
+
   const featuredCollections = [
     {
       name: 'Summer Collection',
@@ -386,23 +417,27 @@ const HomePage = () => {
       {/* Hero Section */}
       <section className="relative h-[80vh] flex items-center overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img 
-            src="https://picsum.photos/seed/hearth-hero/1920/1080" 
-            alt="Seasonal home inspiration" 
-            className="w-full h-full object-cover"
+          <motion.img
+            key={season} // Causes exit/enter animation on source swap
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1 }}
+            src={heroImages[season] || heroImages.winter}
+            alt={`${season} home inspiration`}
+            className="absolute inset-0 w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-black/30" />
         </div>
-        
+
         <div className="max-w-7xl mx-auto px-6 relative z-10 text-white">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             className="max-w-2xl space-y-8"
           >
             <h2 className="text-7xl font-extrabold leading-tight tracking-tighter">
-              Crafted for the <span className="text-primary italic">Rhythms</span> of Life
+              Crafted for the <span className="text-primary italic transition-colors duration-500">Rhythms</span> of Life
             </h2>
             <p className="text-xl text-white/90 leading-relaxed">
               Welcome to Hearth & Home. We believe your living space should evolve with you. Discover our curated collections of artisanal goods designed to bring warmth and intention to every season.
@@ -428,7 +463,7 @@ const HomePage = () => {
           </div>
           <Link to="/collections" className="text-primary font-bold hover:underline">View All Collections</Link>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {featuredCollections.map((collection, index) => (
             <motion.div
@@ -440,9 +475,9 @@ const HomePage = () => {
               className="group relative aspect-[4/3] rounded-3xl overflow-hidden cursor-pointer"
             >
               <Link to={collection.path}>
-                <img 
-                  src={collection.image} 
-                  alt={collection.name} 
+                <img
+                  src={collection.image}
+                  alt={collection.name}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
                   referrerPolicy="no-referrer"
                 />
@@ -530,14 +565,14 @@ const JournalPage = () => {
     <div className="space-y-24 pb-24">
       {/* Featured Editorial Hero */}
       <section className="max-w-7xl mx-auto px-6 pt-12">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative h-[60vh] rounded-[2.5rem] overflow-hidden group cursor-pointer"
         >
-          <img 
-            src="https://picsum.photos/seed/journal-hero/1600/900" 
-            alt="Featured Editorial" 
+          <img
+            src="https://picsum.photos/seed/journal-hero/1600/900"
+            alt="Featured Editorial"
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
             referrerPolicy="no-referrer"
           />
@@ -573,7 +608,7 @@ const JournalPage = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
           {articles.map((article, index) => (
-            <motion.article 
+            <motion.article
               key={article.title}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -582,9 +617,9 @@ const JournalPage = () => {
               className="group cursor-pointer"
             >
               <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-6">
-                <img 
-                  src={article.image} 
-                  alt={article.title} 
+                <img
+                  src={article.image}
+                  alt={article.title}
                   className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                   referrerPolicy="no-referrer"
                 />
@@ -631,9 +666,9 @@ const JournalPage = () => {
             </p>
           </div>
           <form className="max-w-md mx-auto flex gap-3" onSubmit={e => e.preventDefault()}>
-            <input 
-              type="email" 
-              placeholder="Email address" 
+            <input
+              type="email"
+              placeholder="Email address"
               className="flex-1 bg-white border border-slate-200 rounded-xl px-6 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
             />
             <button className="bg-primary text-white px-8 py-4 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
@@ -654,11 +689,11 @@ const Footer = () => (
         </div>
         <h2 className="text-lg font-extrabold tracking-tight uppercase">Hearth &amp; Home</h2>
       </div>
-      
+
       <p className="text-xs text-slate-400 font-medium order-3 md:order-2">
         © 2023 Hearth &amp; Home Design Studio. All rights reserved.
       </p>
-      
+
       <div className="flex gap-6 text-slate-400 order-2 md:order-3">
         <a href="#" className="hover:text-primary transition-colors">
           <Home size={18} />
@@ -705,14 +740,14 @@ const CollectionsPage = () => {
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
       <section className="mb-16 text-center space-y-4">
-        <motion.h2 
+        <motion.h2
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-4xl md:text-5xl font-bold tracking-tight"
         >
           Our Collections
         </motion.h2>
-        <motion.p 
+        <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -731,9 +766,9 @@ const CollectionsPage = () => {
             transition={{ delay: index * 0.1 }}
             className="group relative aspect-[16/9] rounded-3xl overflow-hidden cursor-pointer"
           >
-            <img 
-              src={collection.image} 
-              alt={collection.name} 
+            <img
+              src={collection.image}
+              alt={collection.name}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
               referrerPolicy="no-referrer"
             />
@@ -741,12 +776,12 @@ const CollectionsPage = () => {
             <div className="absolute inset-0 p-10 flex flex-col justify-end">
               <h3 className="text-3xl font-bold text-white mb-2">{collection.name}</h3>
               <p className="text-white/80 max-w-md mb-6">{collection.description}</p>
-              <Link 
+              <Link
                 to={
-                  collection.name === 'Summer Collection' ? '/collections/summer' : 
-                  collection.name === 'Spring Collection' ? '/collections/spring' :
-                  collection.name === 'Autumn Collection' ? '/collections/fall' :
-                  `/catalog?season=${collection.season}`
+                  collection.name === 'Summer Collection' ? '/collections/summer' :
+                    collection.name === 'Spring Collection' ? '/collections/spring' :
+                      collection.name === 'Autumn Collection' ? '/collections/fall' :
+                        `/catalog?season=${collection.season}`
                 }
                 className="inline-flex items-center text-white font-bold group/link"
               >
@@ -766,20 +801,20 @@ const CollectionsPage = () => {
 const AboutPage = () => (
   <div className="max-w-7xl mx-auto px-6 py-24">
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="relative aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl order-2 lg:order-1"
       >
-        <img 
-          src="https://picsum.photos/seed/hearth-about/1000/1250" 
-          alt="Artisanal workshop" 
+        <img
+          src="https://picsum.photos/seed/hearth-about/1000/1250"
+          alt="Artisanal workshop"
           className="absolute inset-0 w-full h-full object-cover"
           referrerPolicy="no-referrer"
         />
       </motion.div>
-      
-      <motion.div 
+
+      <motion.div
         initial={{ opacity: 0, x: 30 }}
         animate={{ opacity: 1, x: 0 }}
         className="space-y-10 order-1 lg:order-2"
@@ -790,7 +825,7 @@ const AboutPage = () => (
             Bringing the <span className="text-primary italic">Soul</span> of the Seasons into Your Home.
           </h2>
         </div>
-        
+
         <div className="space-y-6 text-lg text-slate-500 leading-relaxed">
           <p>
             Founded on the belief that our living spaces should be as dynamic as the world around us, Hearth & Home was born from a passion for artisanal craftsmanship and the changing rhythms of nature.
@@ -821,15 +856,15 @@ const AboutPage = () => (
 const SummerCollectionPage = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const summerProducts = PRODUCTS.filter(p => p.season === 'Summer');
-  
+
   // Mock additional products if needed to fill the grid
-  const displayProducts = [...summerProducts, 
-    { id: 101, name: "Linen Beach Towel", price: 42, image: "https://picsum.photos/seed/summer1/600/800", season: 'Summer', collection: 'Summer Collection' },
-    { id: 102, name: "Ceramic Fruit Bowl", price: 58, image: "https://picsum.photos/seed/summer2/600/800", season: 'Summer', collection: 'Summer Collection' },
-    { id: 103, name: "Rattan Sun Hat", price: 35, image: "https://picsum.photos/seed/summer3/600/800", season: 'Summer', collection: 'Summer Collection' },
-    { id: 104, name: "Outdoor Lantern Set", price: 85, image: "https://picsum.photos/seed/summer4/600/800", season: 'Summer', collection: 'Summer Collection' },
-    { id: 105, name: "Citrus Scented Diffuser", price: 28, image: "https://picsum.photos/seed/summer5/600/800", season: 'Summer', collection: 'Summer Collection' },
-    { id: 106, name: "Teak Garden Stool", price: 145, image: "https://picsum.photos/seed/summer6/600/800", season: 'Summer', collection: 'Summer Collection' },
+  const displayProducts = [...summerProducts,
+  { id: 101, name: "Linen Beach Towel", price: 42, image: "https://picsum.photos/seed/summer1/600/800", season: 'Summer', collection: 'Summer Collection' },
+  { id: 102, name: "Ceramic Fruit Bowl", price: 58, image: "https://picsum.photos/seed/summer2/600/800", season: 'Summer', collection: 'Summer Collection' },
+  { id: 103, name: "Rattan Sun Hat", price: 35, image: "https://picsum.photos/seed/summer3/600/800", season: 'Summer', collection: 'Summer Collection' },
+  { id: 104, name: "Outdoor Lantern Set", price: 85, image: "https://picsum.photos/seed/summer4/600/800", season: 'Summer', collection: 'Summer Collection' },
+  { id: 105, name: "Citrus Scented Diffuser", price: 28, image: "https://picsum.photos/seed/summer5/600/800", season: 'Summer', collection: 'Summer Collection' },
+  { id: 106, name: "Teak Garden Stool", price: 145, image: "https://picsum.photos/seed/summer6/600/800", season: 'Summer', collection: 'Summer Collection' },
   ] as Product[];
 
   return (
@@ -847,7 +882,7 @@ const SummerCollectionPage = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
         {displayProducts.map((product) => (
-          <motion.div 
+          <motion.div
             key={product.id}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -860,9 +895,9 @@ const SummerCollectionPage = () => {
 
       <AnimatePresence>
         {selectedProduct && (
-          <QuickViewModal 
-            product={selectedProduct} 
-            onClose={() => setSelectedProduct(null)} 
+          <QuickViewModal
+            product={selectedProduct}
+            onClose={() => setSelectedProduct(null)}
           />
         )}
       </AnimatePresence>
@@ -873,14 +908,14 @@ const SummerCollectionPage = () => {
 const FallCollectionPage = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const fallProducts = PRODUCTS.filter(p => p.season === 'Autumn');
-  
+
   const displayProducts = [...fallProducts,
-    { id: 201, name: "Woolen Throw Blanket", price: 85, image: "https://picsum.photos/seed/fall1/600/800", season: 'Autumn', collection: 'Fall Collection' },
-    { id: 202, name: "Rustic Pine Candle", price: 24, image: "https://picsum.photos/seed/fall2/600/800", season: 'Autumn', collection: 'Fall Collection' },
-    { id: 203, name: "Copper Kitchen Set", price: 120, image: "https://picsum.photos/seed/fall3/600/800", season: 'Autumn', collection: 'Fall Collection' },
-    { id: 204, name: "Harvest Wreath", price: 45, image: "https://picsum.photos/seed/fall4/600/800", season: 'Autumn', collection: 'Fall Collection' },
-    { id: 205, name: "Leather Journal", price: 32, image: "https://picsum.photos/seed/fall5/600/800", season: 'Autumn', collection: 'Fall Collection' },
-    { id: 206, name: "Velvet Accent Pillow", price: 38, image: "https://picsum.photos/seed/fall6/600/800", season: 'Autumn', collection: 'Fall Collection' },
+  { id: 201, name: "Woolen Throw Blanket", price: 85, image: "https://picsum.photos/seed/fall1/600/800", season: 'Autumn', collection: 'Fall Collection' },
+  { id: 202, name: "Rustic Pine Candle", price: 24, image: "https://picsum.photos/seed/fall2/600/800", season: 'Autumn', collection: 'Fall Collection' },
+  { id: 203, name: "Copper Kitchen Set", price: 120, image: "https://picsum.photos/seed/fall3/600/800", season: 'Autumn', collection: 'Fall Collection' },
+  { id: 204, name: "Harvest Wreath", price: 45, image: "https://picsum.photos/seed/fall4/600/800", season: 'Autumn', collection: 'Fall Collection' },
+  { id: 205, name: "Leather Journal", price: 32, image: "https://picsum.photos/seed/fall5/600/800", season: 'Autumn', collection: 'Fall Collection' },
+  { id: 206, name: "Velvet Accent Pillow", price: 38, image: "https://picsum.photos/seed/fall6/600/800", season: 'Autumn', collection: 'Fall Collection' },
   ] as Product[];
 
   return (
@@ -898,7 +933,7 @@ const FallCollectionPage = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
         {displayProducts.map((product) => (
-          <motion.div 
+          <motion.div
             key={product.id}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -911,9 +946,9 @@ const FallCollectionPage = () => {
 
       <AnimatePresence>
         {selectedProduct && (
-          <QuickViewModal 
-            product={selectedProduct} 
-            onClose={() => setSelectedProduct(null)} 
+          <QuickViewModal
+            product={selectedProduct}
+            onClose={() => setSelectedProduct(null)}
           />
         )}
       </AnimatePresence>
@@ -924,14 +959,14 @@ const FallCollectionPage = () => {
 const SpringCollectionPage = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const springProducts = PRODUCTS.filter(p => p.season === 'Spring');
-  
+
   const displayProducts = [...springProducts,
-    { id: 301, name: "Floral Linen Napkins", price: 28, image: "https://picsum.photos/seed/spring1/600/800", season: 'Spring', collection: 'Spring Collection' },
-    { id: 302, name: "Glass Bud Vase", price: 18, image: "https://picsum.photos/seed/spring2/600/800", season: 'Spring', collection: 'Spring Collection' },
-    { id: 303, name: "Woven Picnic Basket", price: 65, image: "https://picsum.photos/seed/spring3/600/800", season: 'Spring', collection: 'Spring Collection' },
-    { id: 304, name: "Pastel Ceramic Mug", price: 22, image: "https://picsum.photos/seed/spring4/600/800", season: 'Spring', collection: 'Spring Collection' },
-    { id: 305, name: "Embroidered Table Runner", price: 48, image: "https://picsum.photos/seed/spring5/600/800", season: 'Spring', collection: 'Spring Collection' },
-    { id: 306, name: "Lavender Scented Candle", price: 24, image: "https://picsum.photos/seed/spring6/600/800", season: 'Spring', collection: 'Spring Collection' },
+  { id: 301, name: "Floral Linen Napkins", price: 28, image: "https://picsum.photos/seed/spring1/600/800", season: 'Spring', collection: 'Spring Collection' },
+  { id: 302, name: "Glass Bud Vase", price: 18, image: "https://picsum.photos/seed/spring2/600/800", season: 'Spring', collection: 'Spring Collection' },
+  { id: 303, name: "Woven Picnic Basket", price: 65, image: "https://picsum.photos/seed/spring3/600/800", season: 'Spring', collection: 'Spring Collection' },
+  { id: 304, name: "Pastel Ceramic Mug", price: 22, image: "https://picsum.photos/seed/spring4/600/800", season: 'Spring', collection: 'Spring Collection' },
+  { id: 305, name: "Embroidered Table Runner", price: 48, image: "https://picsum.photos/seed/spring5/600/800", season: 'Spring', collection: 'Spring Collection' },
+  { id: 306, name: "Lavender Scented Candle", price: 24, image: "https://picsum.photos/seed/spring6/600/800", season: 'Spring', collection: 'Spring Collection' },
   ] as Product[];
 
   return (
@@ -949,7 +984,7 @@ const SpringCollectionPage = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-12">
         {displayProducts.map((product) => (
-          <motion.div 
+          <motion.div
             key={product.id}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -962,9 +997,9 @@ const SpringCollectionPage = () => {
 
       <AnimatePresence>
         {selectedProduct && (
-          <QuickViewModal 
-            product={selectedProduct} 
-            onClose={() => setSelectedProduct(null)} 
+          <QuickViewModal
+            product={selectedProduct}
+            onClose={() => setSelectedProduct(null)}
           />
         )}
       </AnimatePresence>
@@ -999,14 +1034,14 @@ const SignInPage = () => {
       <main className="flex-1 flex items-center justify-center p-6 md:p-12">
         <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Left Side: Image Card */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="relative aspect-[4/5] rounded-[2.5rem] overflow-hidden shadow-2xl hidden lg:block"
           >
-            <img 
-              src="https://picsum.photos/seed/signin-home/1000/1250" 
-              alt="Interior design" 
+            <img
+              src="https://picsum.photos/seed/signin-home/1000/1250"
+              alt="Interior design"
               className="absolute inset-0 w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
@@ -1020,7 +1055,7 @@ const SignInPage = () => {
           </motion.div>
 
           {/* Right Side: Form */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             className="space-y-10"
@@ -1037,9 +1072,9 @@ const SignInPage = () => {
                 <label className="text-sm font-bold text-slate-700 ml-1">Full Name</label>
                 <div className="relative group">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
-                  <input 
-                    type="text" 
-                    placeholder="Jane Doe" 
+                  <input
+                    type="text"
+                    placeholder="Jane Doe"
                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-12 py-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
                   />
                 </div>
@@ -1049,9 +1084,9 @@ const SignInPage = () => {
                 <label className="text-sm font-bold text-slate-700 ml-1">Email Address</label>
                 <div className="relative group">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
-                  <input 
-                    type="email" 
-                    placeholder="jane@example.com" 
+                  <input
+                    type="email"
+                    placeholder="jane@example.com"
                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-12 py-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
                   />
                 </div>
@@ -1061,12 +1096,12 @@ const SignInPage = () => {
                 <label className="text-sm font-bold text-slate-700 ml-1">Password</label>
                 <div className="relative group">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
-                  <input 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="Create a password" 
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Create a password"
                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-12 py-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
                   />
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
@@ -1123,7 +1158,7 @@ const SignInPage = () => {
               Curating comfort and style for every home since 2012.
             </p>
           </div>
-          
+
           <div>
             <h4 className="font-bold mb-6">Shop</h4>
             <ul className="space-y-4 text-sm text-slate-500">
@@ -1151,7 +1186,7 @@ const SignInPage = () => {
             </ul>
           </div>
         </div>
-        
+
         <div className="pt-8 border-t border-slate-50 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-xs text-slate-400 font-medium">
             © 2024 Hearth &amp; Home. All rights reserved.
@@ -1174,7 +1209,7 @@ const AppContent = () => {
   return (
     <div className="min-h-screen font-sans">
       {!isAuthPage && <Navbar />}
-      
+
       <main>
         <Routes>
           <Route path="/" element={<HomePage />} />
