@@ -1,8 +1,11 @@
-import { Home, Search, ShoppingBag, User, Mail, Share2, ChevronLeft, ChevronRight, X, Lock, Eye, Github } from 'lucide-react';
+import { Home, Search, ShoppingBag, User, Mail, Share2, ChevronLeft, ChevronRight, X, Lock, Eye, Github, LogOut, Package, Heart, Settings, Plus, Minus, Trash2, CreditCard, Check, Loader2, MapPin, Phone, Printer } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link, useLocation, useSearchParams } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useTheme } from './ThemeContext';
+import { useAuth } from './AuthContext';
+import { useCart } from './CartContext';
+import type { CartProduct } from './CartContext';
 
 // --- Types ---
 type Season = 'All' | 'Spring' | 'Summer' | 'Autumn' | 'Winter';
@@ -117,6 +120,8 @@ const SeasonSwitcher = () => {
 
 const Navbar = () => {
   const location = useLocation();
+  const { user, isAuthenticated } = useAuth();
+  const { totalItems: cartTotalItems } = useCart();
 
   return (
     <header className="sticky top-0 z-50 bg-background-light/80 backdrop-blur-md border-b border-primary/10 transition-colors duration-500">
@@ -168,15 +173,26 @@ const Navbar = () => {
             <button className="lg:hidden p-2 hover:bg-primary/10 rounded-full transition-colors">
               <Search size={20} />
             </button>
-            <button className="p-2 hover:bg-primary/10 rounded-full transition-colors relative">
+            <Link to="/cart" className="p-2 hover:bg-primary/10 rounded-full transition-colors relative">
               <ShoppingBag size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full transition-colors duration-500"></span>
-            </button>
-            <button className="p-2 hover:bg-primary/10 rounded-full transition-colors">
-              <Link to="/signin">
+              {cartTotalItems > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center transition-all duration-300">
+                  {cartTotalItems}
+                </span>
+              )}
+            </Link>
+            <Link to={isAuthenticated ? '/profile' : '/signin'} className="p-2 hover:bg-primary/10 rounded-full transition-colors flex items-center">
+              {isAuthenticated && user ? (
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/30"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
                 <User size={20} />
-              </Link>
-            </button>
+              )}
+            </Link>
           </div>
         </div>
       </div>
@@ -184,88 +200,126 @@ const Navbar = () => {
   );
 };
 
-const QuickViewModal = ({ product, onClose }: { product: Product, onClose: () => void }) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm"
-    onClick={onClose}
-  >
+const QuickViewModal = ({ product, onClose }: { product: Product, onClose: () => void }) => {
+  const { addToCart } = useCart();
+  const [added, setAdded] = useState(false);
+
+  const handleAdd = () => {
+    addToCart(product as CartProduct);
+    setAdded(true);
+    setTimeout(() => { setAdded(false); onClose(); }, 800);
+  };
+
+  return (
     <motion.div
-      initial={{ scale: 0.9, opacity: 0, y: 20 }}
-      animate={{ scale: 1, opacity: 1, y: 0 }}
-      exit={{ scale: 0.9, opacity: 0, y: 20 }}
-      className="bg-background-light rounded-2xl overflow-hidden max-w-4xl w-full shadow-2xl flex flex-col md:flex-row transition-colors duration-500"
-      onClick={e => e.stopPropagation()}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
     >
-      <div className="md:w-1/2 aspect-square relative">
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        className="bg-background-light rounded-2xl overflow-hidden max-w-4xl w-full shadow-2xl flex flex-col md:flex-row transition-colors duration-500"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="md:w-1/2 aspect-square relative">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="absolute inset-0 w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+        <div className="md:w-1/2 p-10 flex flex-col justify-center relative">
+          <button
+            onClick={onClose}
+            className="absolute top-6 right-6 p-2 hover:bg-slate-200/50 rounded-full transition-colors"
+          >
+            <X size={20} />
+          </button>
+          <div className="space-y-6">
+            <div>
+              <p className="text-primary font-bold text-sm uppercase tracking-widest mb-2 transition-colors duration-500">{product.collection}</p>
+              <h2 className="text-3xl font-bold">{product.name}</h2>
+              <p className="text-2xl font-medium text-slate-800 mt-2">${product.price.toFixed(2)}</p>
+            </div>
+            <p className="text-slate-600 leading-relaxed">
+              {product.description || "Thoughtfully designed and ethically sourced home goods for every corner of your life."}
+            </p>
+            <div className="pt-4">
+              <button
+                onClick={handleAdd}
+                disabled={added}
+                className={`w-full py-4 rounded-xl font-bold transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2 ${added ? 'bg-emerald-500 text-white' : 'bg-primary text-white hover:bg-primary/90'
+                  }`}
+              >
+                {added ? (<><Check size={20} /> Added!</>) : 'Add to Bag'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+const ProductCard = ({ product, onQuickView }: { product: Product, onQuickView: (p: Product) => void }) => {
+  const { addToCart } = useCart();
+  const [added, setAdded] = useState(false);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToCart(product as CartProduct);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1200);
+  };
+
+  return (
+    <motion.div
+      whileHover={{ y: -8 }}
+      className="group cursor-pointer transition-all duration-500"
+    >
+      <div className="relative aspect-[4/5] bg-slate-200 rounded-xl overflow-hidden mb-4 shadow-sm group-hover:shadow-2xl group-hover:shadow-primary/10 transition-all duration-500">
         <img
           src={product.image}
           alt={product.name}
-          className="absolute inset-0 w-full h-full object-cover"
           referrerPolicy="no-referrer"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
         />
-      </div>
-      <div className="md:w-1/2 p-10 flex flex-col justify-center relative">
-        <button
-          onClick={onClose}
-          className="absolute top-6 right-6 p-2 hover:bg-slate-200/50 rounded-full transition-colors"
-        >
-          <X size={20} />
-        </button>
-        <div className="space-y-6">
-          <div>
-            <p className="text-primary font-bold text-sm uppercase tracking-widest mb-2 transition-colors duration-500">{product.collection}</p>
-            <h2 className="text-3xl font-bold">{product.name}</h2>
-            <p className="text-2xl font-medium text-slate-800 mt-2">${product.price.toFixed(2)}</p>
-          </div>
-          <p className="text-slate-600 leading-relaxed">
-            {product.description || "Thoughtfully designed and ethically sourced home goods for every corner of your life."}
-          </p>
-          <div className="pt-4">
-            <button className="w-full bg-primary text-white py-4 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
-              Add to Bag
-            </button>
-          </div>
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500"></div>
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onQuickView(product);
+            }}
+            className="bg-white/90 backdrop-blur px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-primary hover:text-white transition-all"
+          >
+            Quick View
+          </button>
+          <button
+            onClick={handleAddToCart}
+            className={`backdrop-blur px-4 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-1.5 ${added ? 'bg-emerald-500 text-white' : 'bg-primary/90 text-white hover:bg-primary'
+              }`}
+          >
+            {added ? <Check size={14} /> : <Plus size={14} />}
+            {added ? 'Added' : 'Add'}
+          </button>
         </div>
       </div>
-    </motion.div>
-  </motion.div>
-);
-
-const ProductCard = ({ product, onQuickView }: { product: Product, onQuickView: (p: Product) => void }) => (
-  <motion.div
-    whileHover={{ y: -8 }}
-    className="group cursor-pointer transition-all duration-500"
-  >
-    <div className="relative aspect-[4/5] bg-slate-200 rounded-xl overflow-hidden mb-4 shadow-sm group-hover:shadow-2xl group-hover:shadow-primary/10 transition-all duration-500">
-      <img
-        src={product.image}
-        alt={product.name}
-        referrerPolicy="no-referrer"
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-      />
-      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors duration-500"></div>
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onQuickView(product);
-        }}
-        className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur px-6 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0 hover:bg-primary hover:text-white"
-      >
-        Quick View
-      </button>
-    </div>
-    <div className="flex justify-between items-start px-1">
-      <div>
-        <h3 className="font-semibold text-lg group-hover:text-primary transition-colors duration-300">{product.name}</h3>
-        <p className="text-sm text-slate-500">{product.collection}</p>
+      <div className="flex justify-between items-start px-1">
+        <div>
+          <h3 className="font-semibold text-lg group-hover:text-primary transition-colors duration-300">{product.name}</h3>
+          <p className="text-sm text-slate-500">{product.collection}</p>
+        </div>
+        <span className="text-primary font-bold transition-colors duration-500">${product.price.toFixed(2)}</span>
       </div>
-      <span className="text-primary font-bold transition-colors duration-500">${product.price.toFixed(2)}</span>
-    </div>
-  </motion.div>
-);
+    </motion.div>
+  );
+};
 
 const CatalogPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -325,8 +379,8 @@ const CatalogPage = () => {
               key={season}
               onClick={() => handleSeasonChange(season)}
               className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all duration-300 ${activeSeason === season
-                  ? 'bg-primary text-white shadow-md'
-                  : 'hover:bg-primary/10 text-slate-600'
+                ? 'bg-primary text-white shadow-md'
+                : 'hover:bg-primary/10 text-slate-600'
                 }`}
             >
               {season}
@@ -1007,8 +1061,114 @@ const SpringCollectionPage = () => {
   );
 };
 
+const ProfilePage = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  if (!user) {
+    navigate('/signin');
+    return null;
+  }
+
+  const recentOrders = [
+    { id: '#HH-2847', item: 'Amber Glass Vase', date: 'Feb 12, 2026', status: 'Delivered', price: '$45.00' },
+    { id: '#HH-2831', item: 'Chunky Knit Blanket', date: 'Jan 28, 2026', status: 'Delivered', price: '$120.00' },
+    { id: '#HH-2819', item: 'Spiced Cedar Candle', date: 'Jan 15, 2026', status: 'Delivered', price: '$24.00' },
+  ];
+
+  return (
+    <div className="max-w-5xl mx-auto px-6 py-16 space-y-12">
+      {/* Profile Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row items-center gap-8 bg-white rounded-3xl p-10 shadow-sm border border-primary/5"
+      >
+        <img
+          src={user.avatar}
+          alt={user.name}
+          className="w-28 h-28 rounded-full object-cover ring-4 ring-primary/20 shadow-lg"
+          referrerPolicy="no-referrer"
+        />
+        <div className="flex-1 text-center md:text-left space-y-2">
+          <h2 className="text-3xl font-extrabold tracking-tight">{user.name}</h2>
+          <p className="text-slate-500">{user.email}</p>
+          <p className="text-xs text-slate-400 uppercase tracking-widest">Member since {user.memberSince}</p>
+        </div>
+        <button
+          onClick={() => { logout(); navigate('/'); }}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl border border-red-200 text-red-500 font-bold text-sm hover:bg-red-50 transition-all"
+        >
+          <LogOut size={18} />
+          Sign Out
+        </button>
+      </motion.div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        {[
+          { icon: <Package size={24} />, label: 'Total Orders', value: user.orders },
+          { icon: <Heart size={24} />, label: 'Favorite Seasons', value: user.favoriteSeasons.join(', ') },
+          { icon: <Settings size={24} />, label: 'Account Status', value: 'Active' },
+        ].map((stat) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 space-y-3"
+          >
+            <div className="text-primary">{stat.icon}</div>
+            <p className="text-2xl font-bold">{stat.value}</p>
+            <p className="text-xs text-slate-400 uppercase tracking-widest">{stat.label}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Recent Orders */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-white rounded-3xl p-10 shadow-sm border border-primary/5"
+      >
+        <h3 className="text-xl font-bold mb-6">Recent Orders</h3>
+        <div className="space-y-4">
+          {recentOrders.map((order) => (
+            <div key={order.id} className="flex items-center justify-between py-4 border-b border-slate-50 last:border-0">
+              <div className="space-y-1">
+                <p className="font-bold text-slate-900">{order.item}</p>
+                <p className="text-xs text-slate-400">{order.id} · {order.date}</p>
+              </div>
+              <div className="text-right space-y-1">
+                <p className="font-bold">{order.price}</p>
+                <span className="inline-block text-[10px] font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  {order.status}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 const SignInPage = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoginMode, setIsLoginMode] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const { login, signup, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/profile');
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -1023,9 +1183,14 @@ const SignInPage = () => {
           </h1>
         </Link>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-slate-500 hidden sm:inline">Already have an account?</span>
-          <button className="px-6 py-2.5 rounded-xl border border-primary/20 text-primary font-bold text-sm hover:bg-primary/5 transition-all">
-            Log in
+          <span className="text-sm text-slate-500 hidden sm:inline">
+            {isLoginMode ? "Don't have an account?" : 'Already have an account?'}
+          </span>
+          <button
+            onClick={() => { setIsLoginMode(!isLoginMode); setError(''); setSuccess(''); }}
+            className="px-6 py-2.5 rounded-xl border border-primary/20 text-primary font-bold text-sm hover:bg-primary/5 transition-all"
+          >
+            {isLoginMode ? 'Sign up' : 'Log in'}
           </button>
         </div>
       </header>
@@ -1061,24 +1226,68 @@ const SignInPage = () => {
             className="space-y-10"
           >
             <div className="space-y-4">
-              <h2 className="text-5xl font-extrabold tracking-tight">Create your account</h2>
+              <h2 className="text-5xl font-extrabold tracking-tight">
+                {isLoginMode ? 'Welcome back' : 'Create your account'}
+              </h2>
               <p className="text-lg text-slate-500 leading-relaxed">
-                Join our community of home decor enthusiasts and start transforming your space today.
+                {isLoginMode
+                  ? 'Sign in to access your profile, orders, and personalized recommendations.'
+                  : 'Join our community of home decor enthusiasts and start transforming your space today.'}
               </p>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm font-medium"
+                >
+                  {error}
+                </motion.div>
+              )}
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-emerald-50 border border-emerald-200 text-emerald-600 px-4 py-3 rounded-xl text-sm font-medium"
+                >
+                  {success}
+                </motion.div>
+              )}
             </div>
 
-            <form className="space-y-6" onSubmit={e => e.preventDefault()}>
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 ml-1">Full Name</label>
-                <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
-                  <input
-                    type="text"
-                    placeholder="Jane Doe"
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-12 py-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
-                  />
+            <form className="space-y-6" onSubmit={(e) => {
+              e.preventDefault();
+              setError('');
+              setSuccess('');
+              if (isLoginMode) {
+                const result = login(email, password);
+                if (!result.success) {
+                  setError(result.error || 'Login failed');
+                }
+              } else {
+                if (!name.trim()) { setError('Please enter your name.'); return; }
+                if (!email.trim()) { setError('Please enter your email.'); return; }
+                if (password.length < 6) { setError('Password must be at least 6 characters.'); return; }
+                const result = signup(name, email, password);
+                if (!result.success) {
+                  setError(result.error || 'Sign up failed');
+                }
+              }
+            }}>
+              {!isLoginMode && (
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 ml-1">Full Name</label>
+                  <div className="relative group">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
+                    <input
+                      type="text"
+                      placeholder="Jane Doe"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-12 py-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700 ml-1">Email Address</label>
@@ -1087,6 +1296,8 @@ const SignInPage = () => {
                   <input
                     type="email"
                     placeholder="jane@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-12 py-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
                   />
                 </div>
@@ -1098,7 +1309,9 @@ const SignInPage = () => {
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors" size={20} />
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Create a password"
+                    placeholder={isLoginMode ? 'Enter your password' : 'Create a password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-12 py-4 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all"
                   />
                   <button
@@ -1111,23 +1324,36 @@ const SignInPage = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 ml-1">
-                <input type="checkbox" id="terms" className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary" />
-                <label htmlFor="terms" className="text-sm text-slate-500">
-                  I agree to the <span className="text-primary font-bold cursor-pointer hover:underline">Terms of Service</span> and <span className="text-primary font-bold cursor-pointer hover:underline">Privacy Policy</span>.
-                </label>
-              </div>
+              {!isLoginMode && (
+                <div className="flex items-center gap-3 ml-1">
+                  <input type="checkbox" id="terms" className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary" />
+                  <label htmlFor="terms" className="text-sm text-slate-500">
+                    I agree to the <span className="text-primary font-bold cursor-pointer hover:underline">Terms of Service</span> and <span className="text-primary font-bold cursor-pointer hover:underline">Privacy Policy</span>.
+                  </label>
+                </div>
+              )}
 
-              <button className="w-full bg-primary text-white py-5 rounded-2xl font-bold text-lg hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 transform active:scale-[0.98]">
-                Sign up
+              <button
+                type="submit"
+                className="w-full bg-primary text-white py-5 rounded-2xl font-bold text-lg hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 transform active:scale-[0.98]"
+              >
+                {isLoginMode ? 'Sign in' : 'Sign up'}
               </button>
+
+              {isLoginMode && (
+                <p className="text-center text-xs text-slate-400">
+                  Demo: <span className="font-mono text-slate-600">jane@example.com</span> / <span className="font-mono text-slate-600">password123</span>
+                </p>
+              )}
             </form>
 
             <div className="relative flex items-center justify-center py-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-100"></div>
               </div>
-              <span className="relative bg-white px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Or sign up with</span>
+              <span className="relative bg-white px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
+                {isLoginMode ? 'Or sign in with' : 'Or sign up with'}
+              </span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -1202,6 +1428,399 @@ const SignInPage = () => {
   );
 };
 
+// --- Cart Page ---
+const CartPage = () => {
+  const { items, totalItems, subtotal, tax, shipping, grandTotal, updateQuantity, removeFromCart } = useCart();
+
+  if (items.length === 0) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-24 text-center space-y-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+          <ShoppingBag size={64} className="mx-auto text-slate-300" />
+          <h2 className="text-3xl font-bold">Your cart is empty</h2>
+          <p className="text-slate-500 max-w-md mx-auto">Looks like you haven't added anything to your cart yet. Explore our seasonal collections to find something you love.</p>
+          <Link to="/catalog" className="inline-block bg-primary text-white px-8 py-4 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+            Continue Shopping
+          </Link>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-12">
+      <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-bold mb-12">
+        Shopping Cart <span className="text-slate-400 text-xl font-normal">({totalItems} {totalItems === 1 ? 'item' : 'items'})</span>
+      </motion.h2>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        {/* Cart Items */}
+        <div className="lg:col-span-2 space-y-6">
+          <AnimatePresence mode="popLayout">
+            {items.map((item) => (
+              <motion.div
+                key={item.product.id}
+                layout
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20, height: 0 }}
+                className="flex gap-6 bg-white rounded-2xl p-6 shadow-sm border border-primary/5"
+              >
+                <img
+                  src={item.product.image}
+                  alt={item.product.name}
+                  className="w-28 h-28 object-cover rounded-xl flex-shrink-0"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="font-bold text-lg">{item.product.name}</h3>
+                    <p className="text-sm text-slate-500">{item.product.collection}</p>
+                  </div>
+                  <div className="flex items-center justify-between mt-4">
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                        disabled={item.quantity <= 1}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="font-bold w-8 text-center">{item.quantity}</span>
+                      <button
+                        onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                        className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 hover:bg-slate-50 transition-all"
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <span className="font-bold text-lg">${(item.product.price * item.quantity).toFixed(2)}</span>
+                      <button
+                        onClick={() => removeFromCart(item.product.id)}
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {/* Order Summary Sidebar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 h-fit sticky top-28 space-y-6"
+        >
+          <h3 className="text-xl font-bold">Order Summary</h3>
+          <div className="space-y-4 text-sm">
+            <div className="flex justify-between"><span className="text-slate-500">Items ({totalItems})</span><span className="font-medium">${subtotal.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Tax (8%)</span><span className="font-medium">${tax.toFixed(2)}</span></div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Shipping</span>
+              <span className="font-medium">{shipping === 0 ? <span className="text-emerald-600">FREE</span> : `$${shipping.toFixed(2)}`}</span>
+            </div>
+            {shipping > 0 && <p className="text-[11px] text-slate-400">Free shipping on orders over $100</p>}
+            <div className="border-t border-slate-100 pt-4 flex justify-between text-lg"><span className="font-bold">Total</span><span className="font-bold text-primary">${grandTotal.toFixed(2)}</span></div>
+          </div>
+          <Link
+            to="/checkout"
+            className="block w-full bg-primary text-white py-4 rounded-xl font-bold text-center hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+          >
+            Proceed to Checkout
+          </Link>
+          <Link to="/catalog" className="block text-center text-sm text-primary font-bold hover:underline">Continue Shopping</Link>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
+// --- Checkout Page ---
+const CheckoutPage = () => {
+  const { items, subtotal, tax, shipping, grandTotal, clearCart, setLastOrder } = useCart();
+  const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [form, setForm] = useState({
+    fullName: '', email: '', phone: '', address: '',
+    cardNumber: '', expiry: '', cvv: '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (items.length === 0 && !isProcessing) navigate('/cart');
+  }, [items, navigate, isProcessing]);
+
+  const validate = () => {
+    const errs: Record<string, string> = {};
+    if (!form.fullName.trim()) errs.fullName = 'Required';
+    if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Valid email required';
+    if (!form.phone.trim()) errs.phone = 'Required';
+    if (!form.address.trim()) errs.address = 'Required';
+    if (!/^\d{16}$/.test(form.cardNumber.replace(/\s/g, ''))) errs.cardNumber = '16 digits required';
+    if (!/^\d{2}\/\d{2}$/.test(form.expiry)) errs.expiry = 'MM/YY format';
+    if (!/^\d{3,4}$/.test(form.cvv)) errs.cvv = '3-4 digits';
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const isFormValid = form.fullName && form.email && form.phone && form.address
+    && /^\d{16}$/.test(form.cardNumber.replace(/\s/g, ''))
+    && /^\d{2}\/\d{2}$/.test(form.expiry)
+    && /^\d{3,4}$/.test(form.cvv);
+
+  const handlePay = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setIsProcessing(true);
+
+    setTimeout(() => {
+      const now = new Date();
+      const deliveryDate = new Date(now);
+      deliveryDate.setDate(now.getDate() + 3 + Math.floor(Math.random() * 3));
+
+      const order = {
+        orderId: `ORD-2026-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+        transactionDate: now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+        estimatedDelivery: deliveryDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+        items: [...items],
+        subtotal, tax, shipping, grandTotal,
+        customerName: form.fullName,
+        customerEmail: form.email,
+      };
+      setLastOrder(order);
+      clearCart();
+      navigate('/order-confirmation');
+    }, 2500);
+  };
+
+  const updateField = (field: string, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => { const n = { ...prev }; delete n[field]; return n; });
+  };
+
+  const inputClass = (field: string) =>
+    `w-full bg-slate-50 border ${errors[field] ? 'border-red-300 ring-2 ring-red-100' : 'border-slate-100'} rounded-xl px-4 py-3.5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all text-sm`;
+
+  if (isProcessing) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6">
+        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
+          <Loader2 size={48} className="text-primary" />
+        </motion.div>
+        <p className="text-xl font-bold text-slate-700">Processing your payment...</p>
+        <p className="text-slate-400 text-sm">Please don't close this page</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto px-6 py-12">
+      <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl font-bold mb-12">Checkout</motion.h2>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        {/* Payment Form */}
+        <form onSubmit={handlePay} className="lg:col-span-2 space-y-8">
+          {/* Contact Info */}
+          <div className="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 space-y-6">
+            <h3 className="text-lg font-bold flex items-center gap-2"><User size={20} className="text-primary" /> Contact Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-slate-600 ml-1 mb-1 block">Full Name</label>
+                <input value={form.fullName} onChange={(e) => updateField('fullName', e.target.value)} placeholder="Jane Doe" className={inputClass('fullName')} />
+                {errors.fullName && <p className="text-red-500 text-xs mt-1 ml-1">{errors.fullName}</p>}
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 ml-1 mb-1 block">Email</label>
+                <input value={form.email} onChange={(e) => updateField('email', e.target.value)} type="email" placeholder="jane@example.com" className={inputClass('email')} />
+                {errors.email && <p className="text-red-500 text-xs mt-1 ml-1">{errors.email}</p>}
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 ml-1 mb-1 block">Phone</label>
+                <input value={form.phone} onChange={(e) => updateField('phone', e.target.value)} placeholder="+1 (555) 123-4567" className={inputClass('phone')} />
+                {errors.phone && <p className="text-red-500 text-xs mt-1 ml-1">{errors.phone}</p>}
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 ml-1 mb-1 block">Delivery Address</label>
+                <input value={form.address} onChange={(e) => updateField('address', e.target.value)} placeholder="123 Home St, City" className={inputClass('address')} />
+                {errors.address && <p className="text-red-500 text-xs mt-1 ml-1">{errors.address}</p>}
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Info */}
+          <div className="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 space-y-6">
+            <h3 className="text-lg font-bold flex items-center gap-2"><CreditCard size={20} className="text-primary" /> Payment Details</h3>
+            <p className="text-xs text-slate-400 bg-slate-50 px-3 py-2 rounded-lg">This is a mock payment form. No real charges will be made.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-3">
+                <label className="text-xs font-bold text-slate-600 ml-1 mb-1 block">Card Number</label>
+                <input
+                  value={form.cardNumber}
+                  onChange={(e) => updateField('cardNumber', e.target.value.replace(/\D/g, '').slice(0, 16))}
+                  placeholder="4242 4242 4242 4242"
+                  maxLength={16}
+                  className={inputClass('cardNumber')}
+                />
+                {errors.cardNumber && <p className="text-red-500 text-xs mt-1 ml-1">{errors.cardNumber}</p>}
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 ml-1 mb-1 block">Expiry</label>
+                <input value={form.expiry} onChange={(e) => updateField('expiry', e.target.value)} placeholder="12/28" maxLength={5} className={inputClass('expiry')} />
+                {errors.expiry && <p className="text-red-500 text-xs mt-1 ml-1">{errors.expiry}</p>}
+              </div>
+              <div>
+                <label className="text-xs font-bold text-slate-600 ml-1 mb-1 block">CVV</label>
+                <input value={form.cvv} onChange={(e) => updateField('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))} placeholder="123" maxLength={4} type="password" className={inputClass('cvv')} />
+                {errors.cvv && <p className="text-red-500 text-xs mt-1 ml-1">{errors.cvv}</p>}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={!isFormValid}
+            className="w-full bg-primary text-white py-5 rounded-2xl font-bold text-lg hover:bg-primary/90 transition-all shadow-xl shadow-primary/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none flex items-center justify-center gap-3"
+          >
+            <Lock size={20} /> Pay ${grandTotal.toFixed(2)}
+          </button>
+        </form>
+
+        {/* Order Summary */}
+        <div className="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 h-fit sticky top-28 space-y-6">
+          <h3 className="text-xl font-bold">Order Summary</h3>
+          <div className="space-y-4 max-h-60 overflow-y-auto">
+            {items.map((item) => (
+              <div key={item.product.id} className="flex gap-4 items-center">
+                <img src={item.product.image} alt={item.product.name} className="w-14 h-14 object-cover rounded-lg" referrerPolicy="no-referrer" />
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{item.product.name}</p>
+                  <p className="text-xs text-slate-400">Qty: {item.quantity}</p>
+                </div>
+                <span className="font-bold text-sm">${(item.product.price * item.quantity).toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
+          <div className="border-t border-slate-100 pt-4 space-y-3 text-sm">
+            <div className="flex justify-between"><span className="text-slate-500">Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Tax</span><span>${tax.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Shipping</span><span>{shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}</span></div>
+            <div className="border-t border-slate-100 pt-3 flex justify-between text-lg"><span className="font-bold">Total</span><span className="font-bold text-primary">${grandTotal.toFixed(2)}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Order Confirmation Page ---
+const OrderConfirmationPage = () => {
+  const { lastOrder } = useCart();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!lastOrder) navigate('/');
+  }, [lastOrder, navigate]);
+
+  if (!lastOrder) return null;
+
+  return (
+    <div className="max-w-3xl mx-auto px-6 py-16 space-y-12">
+      {/* Success Header */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center space-y-6"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
+          className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto"
+        >
+          <Check size={40} className="text-emerald-600" />
+        </motion.div>
+        <h2 className="text-4xl font-extrabold">Payment Successful!</h2>
+        <p className="text-slate-500 text-lg">Thank you for your purchase, {lastOrder.customerName}.</p>
+      </motion.div>
+
+      {/* Order Details */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 space-y-6"
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+          <div className="space-y-1">
+            <p className="text-xs text-slate-400 uppercase tracking-widest">Order ID</p>
+            <p className="font-bold text-lg text-primary">{lastOrder.orderId}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-slate-400 uppercase tracking-widest">Transaction Date</p>
+            <p className="font-bold">{lastOrder.transactionDate}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-slate-400 uppercase tracking-widest">Est. Delivery</p>
+            <p className="font-bold">{lastOrder.estimatedDelivery}</p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Receipt */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 space-y-6"
+      >
+        <h3 className="text-xl font-bold">Receipt</h3>
+        <div className="space-y-4">
+          {lastOrder.items.map((item) => (
+            <div key={item.product.id} className="flex items-center justify-between py-3 border-b border-slate-50 last:border-0">
+              <div className="flex items-center gap-4">
+                <img src={item.product.image} alt={item.product.name} className="w-12 h-12 object-cover rounded-lg" referrerPolicy="no-referrer" />
+                <div>
+                  <p className="font-medium">{item.product.name}</p>
+                  <p className="text-xs text-slate-400">Qty: {item.quantity} × ${item.product.price.toFixed(2)}</p>
+                </div>
+              </div>
+              <span className="font-bold">${(item.product.price * item.quantity).toFixed(2)}</span>
+            </div>
+          ))}
+        </div>
+        <div className="border-t border-slate-200 pt-4 space-y-3 text-sm">
+          <div className="flex justify-between"><span className="text-slate-500">Subtotal</span><span>${lastOrder.subtotal.toFixed(2)}</span></div>
+          <div className="flex justify-between"><span className="text-slate-500">Tax (8%)</span><span>${lastOrder.tax.toFixed(2)}</span></div>
+          <div className="flex justify-between"><span className="text-slate-500">Shipping</span><span>{lastOrder.shipping === 0 ? 'FREE' : `$${lastOrder.shipping.toFixed(2)}`}</span></div>
+          <div className="border-t border-slate-200 pt-3 flex justify-between text-xl"><span className="font-bold">Total Paid</span><span className="font-bold text-primary">${lastOrder.grandTotal.toFixed(2)}</span></div>
+        </div>
+      </motion.div>
+
+      {/* Actions */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <button
+          onClick={() => window.print()}
+          className="flex items-center justify-center gap-2 px-8 py-4 border border-primary/20 rounded-xl font-bold text-primary hover:bg-primary/5 transition-all"
+        >
+          <Printer size={20} /> Download Receipt
+        </button>
+        <Link
+          to="/"
+          className="flex items-center justify-center gap-2 bg-primary text-white px-8 py-4 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+        >
+          Continue Shopping
+        </Link>
+      </div>
+    </div>
+  );
+};
+
 const AppContent = () => {
   const location = useLocation();
   const isAuthPage = location.pathname === '/signin';
@@ -1221,6 +1840,10 @@ const AppContent = () => {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/journal" element={<JournalPage />} />
           <Route path="/signin" element={<SignInPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
         </Routes>
       </main>
 
