@@ -1,4 +1,4 @@
-import { Home, Search, ShoppingBag, User, Mail, Share2, ChevronLeft, ChevronRight, X, Lock, Eye, Github, LogOut, Package, Heart, Settings, Plus, Minus, Trash2, CreditCard, Check, Loader2, MapPin, Phone, Printer } from 'lucide-react';
+import { Home, Search, ShoppingBag, User, Mail, Share2, ChevronLeft, ChevronRight, X, Lock, Eye, Github, LogOut, Package, Heart, Settings, Plus, Minus, Trash2, CreditCard, Check, Loader2, MapPin, Phone, Printer, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
@@ -100,20 +100,30 @@ const PRODUCTS: Product[] = [
 
 const SeasonSwitcher = () => {
   const { season, manualSeason, setManualSeason } = useTheme();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="relative group flex items-center">
-      <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/20 hover:bg-primary/10 transition-colors font-medium text-xs uppercase tracking-widest text-slate-600 bg-white">
+    <div className="relative flex items-center">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-primary/20 hover:bg-primary/10 transition-colors font-medium text-xs uppercase tracking-widest text-slate-600 bg-white"
+      >
         <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-        {manualSeason ? `Override: ${manualSeason}` : `Season: ${season}`}
+        <span className="hidden sm:inline">{manualSeason ? `Override: ${manualSeason}` : `Season: ${season}`}</span>
+        <span className="sm:hidden">{manualSeason ? manualSeason.slice(0, 3) : season.slice(0, 3)}</span>
       </button>
-      <div className="absolute top-full right-0 mt-2 w-36 bg-white rounded-xl shadow-xl border border-slate-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all flex flex-col overflow-hidden z-50">
-        <button onClick={() => setManualSeason(null)} className={`text-left px-4 py-2 text-sm hover:bg-slate-50 ${!manualSeason ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Auto Detect</button>
-        <button onClick={() => setManualSeason('spring')} className={`text-left px-4 py-2 text-sm hover:bg-slate-50 ${manualSeason === 'spring' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Spring</button>
-        <button onClick={() => setManualSeason('summer')} className={`text-left px-4 py-2 text-sm hover:bg-slate-50 ${manualSeason === 'summer' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Summer</button>
-        <button onClick={() => setManualSeason('autumn')} className={`text-left px-4 py-2 text-sm hover:bg-slate-50 ${manualSeason === 'autumn' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Autumn</button>
-        <button onClick={() => setManualSeason('winter')} className={`text-left px-4 py-2 text-sm hover:bg-slate-50 ${manualSeason === 'winter' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Winter</button>
-      </div>
+      {isOpen && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
+          <div className="absolute top-full right-0 mt-2 w-36 bg-white rounded-xl shadow-xl border border-slate-100 flex flex-col overflow-hidden z-50">
+            <button onClick={() => { setManualSeason(null); setIsOpen(false); }} className={`text-left px-4 py-2.5 text-sm hover:bg-slate-50 ${!manualSeason ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Auto Detect</button>
+            <button onClick={() => { setManualSeason('spring'); setIsOpen(false); }} className={`text-left px-4 py-2.5 text-sm hover:bg-slate-50 ${manualSeason === 'spring' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Spring</button>
+            <button onClick={() => { setManualSeason('summer'); setIsOpen(false); }} className={`text-left px-4 py-2.5 text-sm hover:bg-slate-50 ${manualSeason === 'summer' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Summer</button>
+            <button onClick={() => { setManualSeason('autumn'); setIsOpen(false); }} className={`text-left px-4 py-2.5 text-sm hover:bg-slate-50 ${manualSeason === 'autumn' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Autumn</button>
+            <button onClick={() => { setManualSeason('winter'); setIsOpen(false); }} className={`text-left px-4 py-2.5 text-sm hover:bg-slate-50 ${manualSeason === 'winter' ? 'text-primary font-bold bg-primary/5' : 'text-slate-600'}`}>Winter</button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -122,81 +132,166 @@ const Navbar = () => {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { totalItems: cartTotalItems } = useCart();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const navLinks = [
+    { name: 'Catalog', path: '/catalog' },
+    { name: 'Collections', path: '/collections' },
+    { name: 'About', path: '/about' },
+    { name: 'Journal', path: '/journal' }
+  ];
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname]);
 
   return (
-    <header className="sticky top-0 z-50 bg-background-light/80 backdrop-blur-md border-b border-primary/10 transition-colors duration-500">
-      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center transition-colors duration-500">
-            <Home size={20} />
-          </div>
-          <h1 className="text-xl font-extrabold tracking-tight uppercase">
-            Hearth <span className="text-primary transition-colors duration-500">&amp;</span> Home
-          </h1>
-        </Link>
+    <>
+      <header className="sticky top-0 z-50 bg-background-light/80 backdrop-blur-md border-b border-primary/10 transition-colors duration-500">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 sm:h-20 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="bg-primary text-white p-1.5 rounded-lg flex items-center justify-center transition-colors duration-500">
+              <Home size={18} />
+            </div>
+            <h1 className="text-base sm:text-xl font-extrabold tracking-tight uppercase">
+              Hearth <span className="text-primary transition-colors duration-500">&amp;</span> Home
+            </h1>
+          </Link>
 
-        <nav className="hidden md:flex items-center gap-10">
-          {[
-            { name: 'Catalog', path: '/catalog' },
-            { name: 'Collections', path: '/collections' },
-            { name: 'About', path: '/about' },
-            { name: 'Journal', path: '/journal' }
-          ].map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={`text-sm font-semibold transition-all relative py-2 group ${location.pathname === item.path ? 'text-primary' : 'text-slate-600 hover:text-primary'
-                }`}
-            >
-              {item.name}
-              {location.pathname === item.path && (
-                <motion.div
-                  layoutId="nav-underline"
-                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary transition-colors duration-500"
-                />
-              )}
-            </Link>
-          ))}
-        </nav>
+          <nav className="hidden md:flex items-center gap-10">
+            {navLinks.map((item) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={`text-sm font-semibold transition-all relative py-2 group ${location.pathname === item.path ? 'text-primary' : 'text-slate-600 hover:text-primary'
+                  }`}
+              >
+                {item.name}
+                {location.pathname === item.path && (
+                  <motion.div
+                    layoutId="nav-underline"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary transition-colors duration-500"
+                  />
+                )}
+              </Link>
+            ))}
+          </nav>
 
-        <div className="flex items-center gap-6">
-          <div className="hidden lg:flex items-center bg-slate-100 rounded-lg px-4 py-2 gap-3 w-64 group focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-            <Search size={18} className="text-slate-400 group-focus-within:text-primary transition-colors" />
-            <input
-              type="text"
-              placeholder="Search stories..."
-              className="bg-transparent text-sm w-full focus:outline-none"
-            />
-          </div>
-          <div className="flex items-center gap-4">
-            <SeasonSwitcher />
-            <button className="lg:hidden p-2 hover:bg-primary/10 rounded-full transition-colors">
-              <Search size={20} />
-            </button>
-            <Link to="/cart" className="p-2 hover:bg-primary/10 rounded-full transition-colors relative">
-              <ShoppingBag size={20} />
-              {cartTotalItems > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center transition-all duration-300">
-                  {cartTotalItems}
-                </span>
-              )}
-            </Link>
-            <Link to={isAuthenticated ? '/profile' : '/signin'} className="p-2 hover:bg-primary/10 rounded-full transition-colors flex items-center">
-              {isAuthenticated && user ? (
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/30"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <User size={20} />
-              )}
-            </Link>
+          <div className="flex items-center gap-3 sm:gap-6">
+            <div className="hidden lg:flex items-center bg-slate-100 rounded-lg px-4 py-2 gap-3 w-64 group focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+              <Search size={18} className="text-slate-400 group-focus-within:text-primary transition-colors" />
+              <input
+                type="text"
+                placeholder="Search stories..."
+                className="bg-transparent text-sm w-full focus:outline-none"
+              />
+            </div>
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div className="hidden sm:block">
+                <SeasonSwitcher />
+              </div>
+              <button className="lg:hidden p-2 hover:bg-primary/10 rounded-full transition-colors">
+                <Search size={20} />
+              </button>
+              <Link to="/cart" className="p-2 hover:bg-primary/10 rounded-full transition-colors relative">
+                <ShoppingBag size={20} />
+                {cartTotalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center transition-all duration-300">
+                    {cartTotalItems}
+                  </span>
+                )}
+              </Link>
+              <Link to={isAuthenticated ? '/profile' : '/signin'} className="p-2 hover:bg-primary/10 rounded-full transition-colors flex items-center">
+                {isAuthenticated && user ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover ring-2 ring-primary/30"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <User size={20} />
+                )}
+              </Link>
+              <button
+                className="md:hidden p-2 hover:bg-primary/10 rounded-full transition-colors"
+                onClick={() => setMobileMenuOpen(true)}
+                aria-label="Open menu"
+              >
+                <Menu size={22} />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Mobile Navigation Drawer */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed top-0 right-0 bottom-0 w-[280px] sm:w-[320px] bg-background-light z-[70] shadow-2xl flex flex-col"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-primary/10">
+                <h2 className="font-extrabold text-lg uppercase tracking-tight">Menu</h2>
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 hover:bg-primary/10 rounded-full transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X size={22} />
+                </button>
+              </div>
+              <nav className="flex-1 overflow-y-auto py-4">
+                {navLinks.map((item) => (
+                  <Link
+                    key={item.name}
+                    to={item.path}
+                    className={`block px-6 py-4 text-base font-semibold transition-all border-l-4 ${location.pathname === item.path
+                      ? 'text-primary border-primary bg-primary/5'
+                      : 'text-slate-700 border-transparent hover:text-primary hover:bg-primary/5'
+                      }`}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </nav>
+              <div className="p-5 border-t border-primary/10 space-y-4">
+                <SeasonSwitcher />
+                <Link
+                  to={isAuthenticated ? '/profile' : '/signin'}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/5 hover:bg-primary/10 transition-colors"
+                >
+                  {isAuthenticated && user ? (
+                    <>
+                      <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover ring-2 ring-primary/30" referrerPolicy="no-referrer" />
+                      <span className="font-semibold text-sm">{user.name}</span>
+                    </>
+                  ) : (
+                    <>
+                      <User size={20} />
+                      <span className="font-semibold text-sm">Sign In</span>
+                    </>
+                  )}
+                </Link>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
@@ -222,7 +317,7 @@ const QuickViewModal = ({ product, onClose }: { product: Product, onClose: () =>
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        className="bg-background-light rounded-2xl overflow-hidden max-w-4xl w-full shadow-2xl flex flex-col md:flex-row transition-colors duration-500"
+        className="bg-background-light rounded-2xl overflow-hidden max-w-4xl w-full shadow-2xl flex flex-col md:flex-row transition-colors duration-500 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="md:w-1/2 aspect-square relative">
@@ -233,7 +328,7 @@ const QuickViewModal = ({ product, onClose }: { product: Product, onClose: () =>
             referrerPolicy="no-referrer"
           />
         </div>
-        <div className="md:w-1/2 p-10 flex flex-col justify-center relative">
+        <div className="md:w-1/2 p-6 sm:p-8 md:p-10 flex flex-col justify-center relative">
           <button
             onClick={onClose}
             className="absolute top-6 right-6 p-2 hover:bg-slate-200/50 rounded-full transition-colors"
@@ -243,7 +338,7 @@ const QuickViewModal = ({ product, onClose }: { product: Product, onClose: () =>
           <div className="space-y-6">
             <div>
               <p className="text-primary font-bold text-sm uppercase tracking-widest mb-2 transition-colors duration-500">{product.collection}</p>
-              <h2 className="text-3xl font-bold">{product.name}</h2>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">{product.name}</h2>
               <p className="text-2xl font-medium text-slate-800 mt-2">${product.price.toFixed(2)}</p>
             </div>
             <p className="text-slate-600 leading-relaxed">
@@ -490,17 +585,17 @@ const HomePage = () => {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-2xl space-y-8"
           >
-            <h2 className="text-7xl font-extrabold leading-tight tracking-tighter">
+            <h2 className="text-3xl sm:text-5xl md:text-7xl font-extrabold leading-tight tracking-tighter">
               Crafted for the <span className="text-primary italic transition-colors duration-500">Rhythms</span> of Life
             </h2>
-            <p className="text-xl text-white/90 leading-relaxed">
+            <p className="text-sm sm:text-base md:text-xl text-white/90 leading-relaxed">
               Welcome to Hearth & Home. We believe your living space should evolve with you. Discover our curated collections of artisanal goods designed to bring warmth and intention to every season.
             </p>
-            <div className="flex gap-4">
-              <Link to="/catalog" className="bg-primary text-white px-8 py-4 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <Link to="/catalog" className="bg-primary text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-center">
                 Explore Catalog
               </Link>
-              <Link to="/about" className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-8 py-4 rounded-xl font-bold hover:bg-white/20 transition-all">
+              <Link to="/about" className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold hover:bg-white/20 transition-all text-center">
                 Our Story
               </Link>
             </div>
@@ -510,10 +605,10 @@ const HomePage = () => {
 
       {/* Featured Collections */}
       <section className="max-w-7xl mx-auto px-6">
-        <div className="flex justify-between items-end mb-12">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-8 sm:mb-12">
           <div className="space-y-2">
             <p className="text-primary font-bold uppercase tracking-widest text-sm">Curated Edits</p>
-            <h3 className="text-4xl font-bold">Featured Collections</h3>
+            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold">Featured Collections</h3>
           </div>
           <Link to="/collections" className="text-primary font-bold hover:underline">View All Collections</Link>
         </div>
@@ -548,9 +643,9 @@ const HomePage = () => {
 
       {/* Brief Introduction */}
       <section className="max-w-7xl mx-auto px-6 py-12">
-        <div className="bg-white rounded-[3rem] p-16 shadow-sm border border-primary/5 flex flex-col md:flex-row items-center gap-16">
+        <div className="bg-white rounded-2xl sm:rounded-[3rem] p-6 sm:p-10 md:p-16 shadow-sm border border-primary/5 flex flex-col md:flex-row items-center gap-8 sm:gap-12 md:gap-16">
           <div className="md:w-1/2 space-y-6">
-            <h3 className="text-4xl font-bold leading-tight">Artisanal quality, ethically sourced.</h3>
+            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">Artisanal quality, ethically sourced.</h3>
             <p className="text-lg text-slate-500 leading-relaxed">
               At Hearth & Home, we partner with independent makers to bring you unique pieces that stand the test of time. Every item in our catalog is chosen for its craftsmanship and its ability to transform a house into a home.
             </p>
@@ -622,7 +717,7 @@ const JournalPage = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative h-[60vh] rounded-[2.5rem] overflow-hidden group cursor-pointer"
+          className="relative h-[40vh] sm:h-[50vh] md:h-[60vh] rounded-2xl sm:rounded-[2.5rem] overflow-hidden group cursor-pointer"
         >
           <img
             src="https://picsum.photos/seed/journal-hero/1600/900"
@@ -631,14 +726,14 @@ const JournalPage = () => {
             referrerPolicy="no-referrer"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-          <div className="absolute inset-0 p-12 flex flex-col justify-end max-w-3xl space-y-6">
+          <div className="absolute inset-0 p-5 sm:p-8 md:p-12 flex flex-col justify-end max-w-3xl space-y-3 sm:space-y-4 md:space-y-6">
             <span className="bg-primary/90 backdrop-blur text-white text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1.5 rounded w-fit">
               Featured Editorial
             </span>
-            <h2 className="text-5xl font-bold text-white leading-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-white leading-tight">
               The Art of Seasonal Living: Embracing Autumn
             </h2>
-            <p className="text-white/80 text-lg leading-relaxed line-clamp-2">
+            <p className="text-white/80 text-sm sm:text-base md:text-lg leading-relaxed line-clamp-2">
               Discover how to transform your space with warm textures, earthy tones, and the gentle glow of candlelight as we transition into the...
             </p>
             <div className="flex items-center gap-4 text-white/60 text-xs font-bold uppercase tracking-widest">
@@ -652,8 +747,8 @@ const JournalPage = () => {
 
       {/* Recent Stories */}
       <section className="max-w-7xl mx-auto px-6">
-        <div className="flex justify-between items-center mb-12">
-          <h3 className="text-3xl font-bold">Recent Stories</h3>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 sm:mb-12">
+          <h3 className="text-2xl sm:text-3xl font-bold">Recent Stories</h3>
           <div className="flex bg-slate-100 p-1 rounded-full">
             <button className="px-6 py-2 bg-white rounded-full text-xs font-bold shadow-sm">Latest</button>
             <button className="px-6 py-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors">Trending</button>
@@ -712,14 +807,14 @@ const JournalPage = () => {
 
       {/* Newsletter Section */}
       <section className="max-w-7xl mx-auto px-6">
-        <div className="bg-slate-50 rounded-[3rem] p-20 text-center space-y-10">
+        <div className="bg-slate-50 rounded-2xl sm:rounded-[3rem] p-8 sm:p-12 md:p-20 text-center space-y-6 sm:space-y-8 md:space-y-10">
           <div className="max-w-2xl mx-auto space-y-6">
-            <h3 className="text-4xl font-bold">Stay Inspired</h3>
+            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold">Stay Inspired</h3>
             <p className="text-lg text-slate-500 leading-relaxed">
               Join our community of home lovers and receive weekly design inspiration, early access to collections, and seasonal guides.
             </p>
           </div>
-          <form className="max-w-md mx-auto flex gap-3" onSubmit={e => e.preventDefault()}>
+          <form className="max-w-md mx-auto flex flex-col sm:flex-row gap-3" onSubmit={e => e.preventDefault()}>
             <input
               type="email"
               placeholder="Email address"
@@ -827,9 +922,9 @@ const CollectionsPage = () => {
               referrerPolicy="no-referrer"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-            <div className="absolute inset-0 p-10 flex flex-col justify-end">
-              <h3 className="text-3xl font-bold text-white mb-2">{collection.name}</h3>
-              <p className="text-white/80 max-w-md mb-6">{collection.description}</p>
+            <div className="absolute inset-0 p-5 sm:p-8 md:p-10 flex flex-col justify-end">
+              <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-2">{collection.name}</h3>
+              <p className="text-white/80 max-w-md mb-4 sm:mb-6 text-sm sm:text-base">{collection.description}</p>
               <Link
                 to={
                   collection.name === 'Summer Collection' ? '/collections/summer' :
@@ -853,8 +948,8 @@ const CollectionsPage = () => {
 };
 
 const AboutPage = () => (
-  <div className="max-w-7xl mx-auto px-6 py-24">
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-24">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 sm:gap-14 md:gap-20 items-center">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -875,7 +970,7 @@ const AboutPage = () => (
       >
         <div className="space-y-4">
           <p className="text-primary font-bold uppercase tracking-widest text-sm">Our Story</p>
-          <h2 className="text-5xl font-extrabold leading-tight tracking-tighter">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight tracking-tighter">
             Bringing the <span className="text-primary italic">Soul</span> of the Seasons into Your Home.
           </h2>
         </div>
@@ -928,7 +1023,7 @@ const SummerCollectionPage = () => {
           <ChevronLeft size={18} className="mr-1 transition-transform group-hover:-translate-x-1" />
           Back to Collections
         </Link>
-        <h2 className="text-5xl font-extrabold tracking-tight">Summer Collection</h2>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">Summer Collection</h2>
         <p className="text-xl text-slate-500 leading-relaxed">
           Bright colors, lightweight textures, and coastal-inspired accents. Our Summer Collection is designed to bring the warmth and energy of the sun-drenched days into your living space.
         </p>
@@ -979,7 +1074,7 @@ const FallCollectionPage = () => {
           <ChevronLeft size={18} className="mr-1 transition-transform group-hover:-translate-x-1" />
           Back to Collections
         </Link>
-        <h2 className="text-5xl font-extrabold tracking-tight">Fall Collection</h2>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">Fall Collection</h2>
         <p className="text-xl text-slate-500 leading-relaxed">
           Warm tones, cozy textures, and earthy accents. Our Fall Collection captures the essence of the harvest season, bringing comfort and richness to your home.
         </p>
@@ -1030,7 +1125,7 @@ const SpringCollectionPage = () => {
           <ChevronLeft size={18} className="mr-1 transition-transform group-hover:-translate-x-1" />
           Back to Collections
         </Link>
-        <h2 className="text-5xl font-extrabold tracking-tight">Spring Collection</h2>
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">Spring Collection</h2>
         <p className="text-xl text-slate-500 leading-relaxed">
           Fresh beginnings, delicate florals, and airy textures. Our Spring Collection is a celebration of renewal, designed to breathe new life into every corner of your home.
         </p>
@@ -1226,7 +1321,7 @@ const SignInPage = () => {
             className="space-y-10"
           >
             <div className="space-y-4">
-              <h2 className="text-5xl font-extrabold tracking-tight">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
                 {isLoginMode ? 'Welcome back' : 'Create your account'}
               </h2>
               <p className="text-lg text-slate-500 leading-relaxed">
@@ -1464,12 +1559,12 @@ const CartPage = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20, height: 0 }}
-                className="flex gap-6 bg-white rounded-2xl p-6 shadow-sm border border-primary/5"
+                className="flex flex-col sm:flex-row gap-4 sm:gap-6 bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-primary/5"
               >
                 <img
                   src={item.product.image}
                   alt={item.product.name}
-                  className="w-28 h-28 object-cover rounded-xl flex-shrink-0"
+                  className="w-full sm:w-28 h-40 sm:h-28 object-cover rounded-xl flex-shrink-0"
                   referrerPolicy="no-referrer"
                 />
                 <div className="flex-1 flex flex-col justify-between">
@@ -1515,7 +1610,7 @@ const CartPage = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 h-fit sticky top-28 space-y-6"
+          className="bg-white rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm border border-primary/5 h-fit lg:sticky lg:top-28 space-y-6"
         >
           <h3 className="text-xl font-bold">Order Summary</h3>
           <div className="space-y-4 text-sm">
@@ -1627,7 +1722,7 @@ const CheckoutPage = () => {
         {/* Payment Form */}
         <form onSubmit={handlePay} className="lg:col-span-2 space-y-8">
           {/* Contact Info */}
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 space-y-6">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm border border-primary/5 space-y-6">
             <h3 className="text-lg font-bold flex items-center gap-2"><User size={20} className="text-primary" /> Contact Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1654,7 +1749,7 @@ const CheckoutPage = () => {
           </div>
 
           {/* Payment Info */}
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 space-y-6">
+          <div className="bg-white rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm border border-primary/5 space-y-6">
             <h3 className="text-lg font-bold flex items-center gap-2"><CreditCard size={20} className="text-primary" /> Payment Details</h3>
             <p className="text-xs text-slate-400 bg-slate-50 px-3 py-2 rounded-lg">This is a mock payment form. No real charges will be made.</p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1692,7 +1787,7 @@ const CheckoutPage = () => {
         </form>
 
         {/* Order Summary */}
-        <div className="bg-white rounded-2xl p-8 shadow-sm border border-primary/5 h-fit sticky top-28 space-y-6">
+        <div className="bg-white rounded-2xl p-4 sm:p-6 md:p-8 shadow-sm border border-primary/5 h-fit lg:sticky lg:top-28 space-y-6">
           <h3 className="text-xl font-bold">Order Summary</h3>
           <div className="space-y-4 max-h-60 overflow-y-auto">
             {items.map((item) => (

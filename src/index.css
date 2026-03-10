@@ -59,8 +59,15 @@
 }
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-background-light text-slate-900 antialiased;
     transition: background-color 0.8s ease-in-out, color 0.8s ease-in-out;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: hidden;
   }
 }
